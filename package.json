@@ -1,0 +1,36 @@
+{
+	"name": "avsnap-wattbox",
+	"version": "1.0.0",
+	"description": "",
+	"manufacturer": "AVSnap",
+	"product": "WattBox",
+	"shortname": "wattbox",
+	"main": "src/index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"prettier": "prettier",
+		"eslint": "eslint"
+	},
+	"keywords": [
+		"wattbox",
+        "power",
+        "control",
+        "avsnap"
+	],
+	"author": "David Stevens <issues@jtf4.com>",
+	"license": "MIT",
+	"devDependencies": {
+		"eslint": "^8.4.1",
+		"eslint-plugin-prettier": "^4.0.0",
+		"prettier": "^2.5.1"
+	},
+	"homepage": "https://github.com/bitfocus/companion-module-avsnap-wattbox#readme",
+	"bugs": {
+		"url": "https://github.com/bitfocus/companion-module-avsnap-wattbox/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bitfocus/companion-module-avsnap-wattbox.git"
+	},
+	"api_version": "1.0.0"
+}
