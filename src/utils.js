@@ -5,5 +5,5 @@ function getAuthKey(username, password) {
 }
 
 module.exports = {
-	getAuthKey
-}
+	getAuthKey,
+};

@@ -18,6 +18,23 @@ module.exports = {
 				required: true,
 			},
 			{
+				type: 'textinput',
+				id: 'username',
+				label: 'Username',
+				width: 12,
+				default: 'wattbox',
+				required: true,
+			},
+			{
+				type: 'textinput',
+				id: 'password',
+				label: 'Password',
+				width: 12,
+				regex: this.REGEX_PASSWORD,
+				default: 'wattbox',
+				required: true,
+			},
+			{
 				type: 'checkbox',
 				id: 'polling',
 				label: 'Enable Polling?',
@@ -33,6 +50,6 @@ module.exports = {
 				default: this.INTERVAL_DEFAULT,
 				required: true,
 			},
-		]
+		];
 	},
-}
+};

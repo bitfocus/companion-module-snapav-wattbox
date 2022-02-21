@@ -43,7 +43,6 @@ module.exports = {
 						default: '1',
 					},
 				],
-				
 			},
 			autoRebootOn: {
 				label: 'Auto Reboot On',
@@ -51,9 +50,9 @@ module.exports = {
 			autoRebootOff: {
 				label: 'Auto Reboot Off',
 			},
-		}
+		};
 
-		this.setActions(actions)
+		this.setActions(actions);
 	},
 
 	action(action) {
@@ -62,22 +61,22 @@ module.exports = {
 				headers: {
 					KeepAlive: 300,
 					Connection: 'keep-alive',
-					UserAgent: 'app'
-				}
+					UserAgent: 'app',
+				},
 			};
 
 			switch (action.action) {
 				case 'power': {
 					getOptions.path = `/control.cgi'?outlet=${action.options.outlet}&command=${action.options.powerState}`;
-					break
+					break;
 				}
 				case 'powercycle': {
 					getOptions.path = `/control.cgi'?outlet=${action.options.outlet}&command=3`;
-					break
+					break;
 				}
 				case 'autoRebootOn': {
 					getOptions.path = `/control.cgi'?outlet=0&command=4`;
-					break
+					break;
 				}
 				case 'autoRebootOff': {
 					getOptions.path = `/control.cgi'?outlet=0&command=4`;
@@ -85,20 +84,19 @@ module.exports = {
 			}
 
 			if (getOptions.path > 0) {
-
 				getOptions.headers.Authorization = `Basic ${this.authKey}`;
 				getOptions.hostname = this.config.ip;
-				
+
 				http.get(getOptions, (res, err) => {
 					if (err !== null) {
-						this.status(this.STATUS_ERROR, `Keylight Change Request Failed. Type: ${action.action}`)
-						this.log('error', `Keylight Change Request Failed. Type: ${action.action}`)
+						this.status(this.STATUS_ERROR, `Keylight Change Request Failed. Type: ${action.action}`);
+						this.log('error', `Keylight Change Request Failed. Type: ${action.action}`);
 					} else {
-						this.status(this.STATUS_OK)
-						this.updateVariables(data.lights[0])
+						this.status(this.STATUS_OK);
+						this.updateVariables(data.lights[0]);
 					}
-				})
+				});
 			}
 		}
 	},
-}
+};
