@@ -26,7 +26,7 @@ class AvsnapWattboxInstance extends instance_skel {
 
 		this.config = config;
 
-		this.authKey = this.getAuthKey(this.config.username, this.config.password);
+		this.authKey = getAuthKey(this.config.username, this.config.password);
 
 		this.data = {
 			status: {
@@ -42,7 +42,7 @@ class AvsnapWattboxInstance extends instance_skel {
 	}
 
 	static GetUpgradeScripts() {
-		return [upgrades.upgradeV1_2_0];
+		//return [upgrades.upgradeV1_2_0];
 	}
 
 	init() {

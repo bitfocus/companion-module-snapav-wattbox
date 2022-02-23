@@ -1,0 +1,27 @@
+## SnapAV-WattBox
+
+This module will allow you to control the WattBox family of devices using companion.
+
+### Configuration
+
+- The WattBox must be powered on and connected to the same network as the computer that is running Companion. The WattBox can be controlled across VLANs, however, you must allow communication between the required VLANs on port 80.
+- This module controls the WattBox through REST on port 80.
+
+#### Static Network Configuration (optional)
+
+- For better performance and reliability, it is recommended that you assign the WattBox a static IP address. One way to accomplish this is to make a DHCP reservation on your router or DHCP server.
+
+### To use the module
+
+Add a button and choose the action you want to use.
+
+**Avalible Actions:**
+
+- Turn an outlet on the WattBox on or off.
+- Rebooting outlet.
+- Turning auto reboot on
+- Turning audio reboot off
+
+### Tested Devices
+
+- WattBox WB-300-IP-3 (Firmware: WB10.6c14)

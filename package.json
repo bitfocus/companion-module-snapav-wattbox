@@ -1,11 +1,11 @@
 {
-	"name": "avsnap-wattbox",
+	"name": "snapav-wattbox",
 	"version": "1.0.0",
-	"description": "",
-	"manufacturer": "AVSnap",
+	"api_version": "1.0.0",
+	"manufacturer": "SnapAV",
 	"product": "WattBox",
 	"shortname": "wattbox",
-	"main": "src/index.js",
+ 	"main": "src/index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"prettier": "prettier",
@@ -31,6 +31,5 @@
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/bitfocus/companion-module-avsnap-wattbox.git"
-	},
-	"api_version": "1.0.0"
+	}
 }

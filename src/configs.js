@@ -18,6 +18,16 @@ module.exports = {
 				required: true,
 			},
 			{
+				type: 'dropdown',
+				label: 'Model',
+				id: 'model',
+				choices: [
+					{ id: '300', label: 'WB-300-IP-3' },
+					{ id: '700', label: 'WB-700-IPV-12' },
+				],
+				default: '300',
+			},
+			{
 				type: 'textinput',
 				id: 'username',
 				label: 'Username',
