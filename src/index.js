@@ -5,11 +5,6 @@ const http = require('http');
 const { getAuthKey } = require('./utils');
 const actions = require('./actions');
 const configs = require('./configs');
-//const constants = require('./constants')
-//const feedbacks = require('./feedbacks')
-//const polling = require('./polling')
-//const upgrades = require('./upgrades')
-//const variables = require('./variables')
 
 class AvsnapWattboxInstance extends instance_skel {
 	constructor(system, id, config) {
@@ -17,11 +12,7 @@ class AvsnapWattboxInstance extends instance_skel {
 
 		Object.assign(this, {
 			...actions,
-			//...constants,
 			...configs,
-			//...feedbacks,
-			//...polling,
-			//...variables,
 		});
 
 		this.config = config;
@@ -37,12 +28,7 @@ class AvsnapWattboxInstance extends instance_skel {
 			interval: null,
 		};
 
-		//this.initConstants()
 		this.initActions();
-	}
-
-	static GetUpgradeScripts() {
-		//return [upgrades.upgradeV1_2_0];
 	}
 
 	init() {
@@ -55,10 +41,6 @@ class AvsnapWattboxInstance extends instance_skel {
 		}
 
 		this.authKey = this.getAuthKey(this.config.username, this.config.password);
-
-		//this.initFeedbacks()
-		//this.updateVariableDefinitions()
-		//this.initPolling()
 
 		this.status(this.STATUS_OK);
 	}
