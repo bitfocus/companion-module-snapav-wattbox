@@ -52,21 +52,20 @@ module.exports = {
 				label: 'Auto Reboot Off',
 			},
 		};
-		if(this.config.model == '300') {
+		if (this.config.model == '300') {
 			actions.power.options[1].choices = [
 				{ id: '0', label: 'All' },
 				{ id: '1', label: '1' },
 				{ id: '2', label: '2' },
-				{ id: '3', label: '3' }
-			]
+				{ id: '3', label: '3' },
+			];
 			actions.powercycle.options[0].choices = [
 				{ id: '0', label: 'All' },
 				{ id: '1', label: '1' },
 				{ id: '2', label: '2' },
 				{ id: '3', label: '3' },
-			]
-			
-		} else if(this.config.model == '700') {
+			];
+		} else if (this.config.model == '700') {
 			actions.power.options[1].choices = [
 				{ id: '0', label: 'All' },
 				{ id: '1', label: '1' },
@@ -80,8 +79,8 @@ module.exports = {
 				{ id: '9', label: '9' },
 				{ id: '10', label: '10' },
 				{ id: '11', label: '11' },
-				{ id: '12', label: '12' }
-			]
+				{ id: '12', label: '12' },
+			];
 			actions.powercycle.options[0].choices = [
 				{ id: '0', label: 'All' },
 				{ id: '1', label: '1' },
@@ -95,16 +94,17 @@ module.exports = {
 				{ id: '9', label: '9' },
 				{ id: '10', label: '10' },
 				{ id: '11', label: '11' },
-				{ id: '12', label: '12' }
-			]
+				{ id: '12', label: '12' },
+			];
 		}
 
 		this.setActions(actions);
 	},
 
 	action(action) {
-		if (this.config.ip) {
+		var self = this;
 
+		if (self.config.ip) {
 			let path;
 
 			switch (action.action) {
@@ -126,26 +126,32 @@ module.exports = {
 			}
 
 			if (path.length > 0) {
+				let url = 'http://' + self.config.ip + path;
 
-				let headers = {};
-				
-				headers['Authorization'] = 'Basic ' + this.authKey;
+				this.log('debug', `making request:, ${url}`);
 
-				var extra_args = {
-					connection : { rejectUnauthorized : false }
+				let get_args = {
+					headers: {
+						Host: self.config.ip,
+						'Keep-Alive': '300',
+						Connection: 'keep-alive',
+						'User-Agent': 'APP',
+						Authorization: `Basic ${self.authKey}`,
+					},
 				};
 
-				let url = 'http://' + this.config.ip + path;
-
-				this.system.emit('rest_get', url, (err, res) => {
-					if (err != null) {
-						this.status(this.STATUS_ERROR, `WattBox Command Failed. Type: ${action.action}. Error: ${JSON.stringify(res)}`);
-						this.log('error', `WattBox Command Request Failed. Type: ${action.action}. Error: ${JSON.stringify(res)}`);
-					} else {
-						this.status(this.STATUS_OK);
-					}
-				}, headers, extra_args);
-
+				self.rest
+					.get(url, get_args, function (data, response) {
+						self.status(self.STATUS_OK);
+						console.log(data);
+					})
+					.on('error', function (error) {
+						self.status(self.STATUS_ERROR, 'ERROR: Chk Credentials');
+						self.log(
+							'error',
+							`Error executing action ${action.action} with message ${error.message}. Is your username and password correct?`
+						);
+					});
 			}
 		}
 	},

@@ -44,22 +44,6 @@ module.exports = {
 				default: 'wattbox',
 				required: true,
 			},
-			{
-				type: 'checkbox',
-				id: 'polling',
-				label: 'Enable Polling?',
-				width: 6,
-				default: false,
-			},
-			{
-				type: 'number',
-				id: 'interval',
-				label: `Polling interval in milliseconds (default: ${this.INTERVAL_DEFAULT}, min: ${this.INTERVAL_MIN})`,
-				width: 12,
-				min: this.INTERVAL_MIN,
-				default: this.INTERVAL_DEFAULT,
-				required: true,
-			},
 		];
 	},
 };
