@@ -1,8 +1,7 @@
-module.exports = {
-	initActions() {
-		const actions = {
+export function getActions() {
+	let actions = {
 			power: {
-				label: 'Power',
+				name: 'Power',
 				options: [
 					{
 						type: 'dropdown',
@@ -12,7 +11,7 @@ module.exports = {
 							{ id: '0', label: 'Off' },
 							{ id: '1', label: 'On' },
 						],
-						default: 'off',
+						default: '0',
 					},
 					{
 						type: 'dropdown',
@@ -27,9 +26,14 @@ module.exports = {
 						default: '1',
 					},
 				],
+				callback: (action) => {
+					let path;
+					path = `/control.cgi?outlet=${action.options.outlet}&command=${action.options.powerState}`;
+					this.sendCommand(path);
+				}
 			},
 			powercycle: {
-				label: 'Power Cycle',
+				name: 'Power Cycle',
 				options: [
 					{
 						type: 'dropdown',
@@ -44,13 +48,30 @@ module.exports = {
 						default: '1',
 					},
 				],
+				callback: (action) => {
+					let path;
+					path = `/control.cgi?outlet=${action.options.outlet}&command=3`;
+					this.sendCommand(path);
+				}
 			},
 			autoRebootOn: {
-				label: 'Auto Reboot On',
+				name: 'Auto Reboot On',
+				options: [],
+				callback: (action) => {
+					let path;
+					path = `/control.cgi?outlet=0&command=4`;
+					this.sendCommand(path);
+				}
 			},
 			autoRebootOff: {
-				label: 'Auto Reboot Off',
-			},
+				name: 'Auto Reboot Off',
+				options: [],
+				callback: (action) => {
+					let path;
+					path = `/control.cgi?outlet=0&command=4`;
+					this.sendCommand(path);
+				}
+			}
 		};
 		if(this.config.model == '300') {
 			actions.power.options[1].choices = [
@@ -97,56 +118,8 @@ module.exports = {
 				{ id: '11', label: '11' },
 				{ id: '12', label: '12' }
 			]
-		}
+		};
 
-		this.setActions(actions);
-	},
+		return actions;
 
-	action(action) {
-		if (this.config.ip) {
-
-			let path;
-
-			switch (action.action) {
-				case 'power': {
-					path = `/control.cgi?outlet=${action.options.outlet}&command=${action.options.powerState}`;
-					break;
-				}
-				case 'powercycle': {
-					path = `/control.cgi?outlet=${action.options.outlet}&command=3`;
-					break;
-				}
-				case 'autoRebootOn': {
-					path = `/control.cgi?outlet=0&command=4`;
-					break;
-				}
-				case 'autoRebootOff': {
-					path = `/control.cgi?outlet=0&command=4`;
-				}
-			}
-
-			if (path.length > 0) {
-
-				let headers = {};
-				
-				headers['Authorization'] = 'Basic ' + this.authKey;
-
-				var extra_args = {
-					connection : { rejectUnauthorized : false }
-				};
-
-				let url = 'http://' + this.config.ip + path;
-
-				this.system.emit('rest_get', url, (err, res) => {
-					if (err != null) {
-						this.status(this.STATUS_ERROR, `WattBox Command Failed. Type: ${action.action}. Error: ${JSON.stringify(res)}`);
-						this.log('error', `WattBox Command Request Failed. Type: ${action.action}. Error: ${JSON.stringify(res)}`);
-					} else {
-						this.status(this.STATUS_OK);
-					}
-				}, headers, extra_args);
-
-			}
-		}
-	},
-};
+	}

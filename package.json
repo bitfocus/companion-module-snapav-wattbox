@@ -5,7 +5,8 @@
 	"manufacturer": "SnapAV",
 	"product": "WattBox",
 	"shortname": "wattbox",
- 	"main": "src/index.js",
+	"main": "src/index.js",
+	"type": "module",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"prettier": "prettier",
@@ -13,13 +14,14 @@
 	},
 	"keywords": [
 		"wattbox",
-        "power",
-        "control",
-        "avsnap"
+		"power",
+		"control",
+		"avsnap"
 	],
 	"author": "David Stevens <issues@jtf4.com>",
 	"license": "MIT",
 	"devDependencies": {
+		"@companion-module/tools": "^0.5.1",
 		"eslint": "^8.4.1",
 		"eslint-plugin-prettier": "^4.0.0",
 		"prettier": "^2.5.1"
@@ -31,5 +33,10 @@
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/bitfocus/companion-module-avsnap-wattbox.git"
+	},
+	"dependencies": {
+		"@companion-module/base": "~1.0.1",
+		"axios": "^1.4.0",
+		"xml2js": "^0.5.0"
 	}
 }

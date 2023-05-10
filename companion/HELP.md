@@ -15,12 +15,30 @@ This module will allow you to control the WattBox family of devices using compan
 
 Add a button and choose the action you want to use.
 
-**Avalible Actions:**
+**Available Actions:**
 
 - Turn an outlet on the WattBox on or off.
 - Rebooting outlet.
 - Turning auto reboot on
 - Turning audio reboot off
+
+**Available Presets**
+- Outlet On
+- Outlet Off
+
+**Available Feedbacks**
+- Outlet On
+- Outlet Off
+
+**Available Variables**
+- Outlet Name
+- Outlet State
+- Device Name
+- Cloud Status
+- Voltage
+- Amperage
+- Wattage
+- Device Serial Number
 
 ### Tested Devices
 
