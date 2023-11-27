@@ -11,6 +11,10 @@
 		{
 			"name": "David Stevens",
 			"email": "opensource@jtf4.com"
+		},
+		{
+			"name": "Joseph Adams",
+			"email": "josephdadams@gmail.com"
 		}
 	],
 	"legacyIds": [],
@@ -22,5 +26,5 @@
 	},
 	"manufacturer": "Snapav",
 	"products": ["Wattbox"],
-	"keywords": ["sanapav", "power", "wattbox"]
+	"keywords": ["snapav", "power", "wattbox"]
 }

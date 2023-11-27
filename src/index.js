@@ -1,53 +1,28 @@
-import { InstanceBase, runEntrypoint, Regex } from '@companion-module/base';
+const { InstanceBase, InstanceStatus, runEntrypoint } = require('@companion-module/base');
 
-import axios from 'axios';
-import * as xml2js from 'xml2js';
+const config = require('./config.js');
 
-import * as actions from './actions.js';
-import * as presets from './presets.js';
-import * as variables from './variables.js';
-import * as configs from './configs.js';
-import * as utils from './utils.js';
-import * as feedbacks from './feedbacks.js'
+const actions = require('./actions.js');
+const feedbacks = require('./feedbacks.js');
+const variables = require('./variables.js');
+const presets = require('./presets.js');
+
+const constants = require('./constants.js');
+const utils = require('./utils.js');
 
 class SnapAVWattboxInstance extends InstanceBase {
 	constructor(internal) {
 		super(internal);
 
 		Object.assign(this, {
-			...configs,
+			...config,
 			...actions,
 			...presets,
 			...variables,
+			...constants,
 			...utils,
-			...feedbacks
+			...feedbacks,
 		});
-
-		//this.updateVariables = updateVariables
-
-		this.DEVICE_DATA = {
-			deviceInfo: {
-				hostName: '',
-				hardwareVersion: '',
-				serialNumber: '',
-				cloudStatus: 0
-			},
-			powerInfo: {
-				voltage: 0,
-				current: 0,
-				power: 0
-			},
-			outletInfo: {}
-		};
-
-		this.axios = axios;
-		this.parseXml = xml2js.parseString;
-
-		this.init(this.getConfigFields());
-	}
-
-	async init(config) {
-		this.config = config;
 
 		this.POLLING_INTERVAL = null; //used to poll the device every second
 		this.CONNECTED = false; //used for friendly notifying of the user that we have not received data yet
@@ -59,120 +34,79 @@ class SnapAVWattboxInstance extends InstanceBase {
 				hostName: '',
 				hardwareVersion: '',
 				serialNumber: '',
-				cloudStatus: 0
+				cloudStatus: 0,
 			},
 			powerInfo: {
 				voltage: 0,
 				current: 0,
-				power: 0
+				power: 0,
 			},
-			outletInfo: []
+			outletInfo: [],
 		};
 
-		if(this.config.model == 300) {
-			for(var i = 1; i <= 3; i++ ) {
-				this.DEVICE_DATA.outletInfo[i] = {
-					name: '',
-					state: 0
-				}
-			}
-		} else if (this.config.model == 700) {
-			for(var i = 1; i <= 12; i++ ) {
-				this.DEVICE_DATA.outletInfo[i] = {
-					name: '',
-					state: 0
-				}
-			}
-		}
-
-		this.authKey = this.getAuthKey(this.config.username, this.config.password);
-
-		if (this.config.polling) {
-			this.setupInterval();
-		}
-
-		this.initActions();
-		this.initVariables();
-		this.initFeedbacks();
-		this.initPresets();
-
-		this.updateVariables();
-
-		this.updateStatus('ok');
+		this.QUEUE = [];
 	}
 
-	async destroy() {
-		if (this.socket !== undefined) {
-			this.socket.destroy();
-			delete this.socket;
-		}
-
-		if (this.POLLING_INTERVAL) {
-			clearInterval(this.POLLING_INTERVAL);
-			this.POLLING_INTERVAL = null;
-		}
+	async init(config) {
+		this.configUpdated(config);
 	}
 
 	async configUpdated(config) {
 		this.config = config;
 
+		this.config.protocol = 'http';
+
+		let model = this.MODELS.find((model) => model.id === this.config.model);
+
+		if (model) {
+			if (model.protocol) {
+				console.log('setting protocol to ' + model.protocol);
+				this.config.protocol = model.protocol;
+			}
+		}
+
+		this.buildOutletChoices();
+
 		if (this.POLLING_INTERVAL) {
 			clearInterval(this.POLLING_INTERVAL);
 			this.POLLING_INTERVAL = null;
 		}
 
-		this.authKey = this.getAuthKey(this.config.username, this.config.password);
-
-		if (this.config.polling) {
-			this.setupInterval();
-		}
-
 		this.initActions();
+		this.initFeedbacks();
 		this.initVariables();
 		this.initPresets();
-		this.initFeedbacks();
 
-		this.updateVariables();
-	}
+		this.checkVariables();
+		this.checkFeedbacks();
 
-	initVariables() {
-		const variables = this.getVariables();
-		this.setVariableDefinitions(variables);
-	}
+		if (this.config.protocol === 'http') {
+			this.authKey = this.getAuthKey(this.config.username, this.config.password);
+			this.updateStatus(InstanceStatus.Ok);
 
-	initPresets() {
-		const presets = this.getPresets();
-		this.setPresetDefinitions(presets);
-	}
-
-	initActions() {
-		const actions = this.getActions();
-		this.setActionDefinitions(actions);
-	}
-
-	initFeedbacks() {
-		const feedbacks = this.getFeedbacks();
-		this.setFeedbackDefinitions(feedbacks);
-	}
-
-	setupInterval() {
-		this.stopInterval();
-
-		if (this.config.polling) {
-			//this.getInformation();
-			this.POLLING_INTERVAL = setInterval(this.getInformation.bind(this), 2000);
+			if (this.config.polling) {
+				this.setupInterval();
+			}
+		} else if (this.config.protocol === 'telnet') {
+			this.initTelnet();
 		}
 	}
 
-	getInformation() {
-		this.getInformation();
-	}
+	async destroy() {
+		if (this.config.protocol === 'telnet') {
+			this.sendTelnetCommand('!Exit');
+		} else {
+			if (this.socket !== undefined) {
+				this.socket.destroy();
+				delete this.socket;
+			}
 
-	stopInterval() {
-		if (this.POLLING_INTERVAL !== null) {
-			clearInterval(this.POLLING_INTERVAL);
-			this.POLLING_INTERVAL = null;
+			if (this.POLLING_INTERVAL) {
+				clearInterval(this.POLLING_INTERVAL);
+				this.POLLING_INTERVAL = null;
+			}
 		}
 	}
 }
+
 runEntrypoint(SnapAVWattboxInstance, []);
