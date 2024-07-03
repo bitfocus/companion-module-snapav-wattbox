@@ -54,8 +54,6 @@ class SnapAVWattboxInstance extends InstanceBase {
 	async configUpdated(config) {
 		this.config = config;
 
-		this.config.protocol = 'http';
-
 		let model = this.MODELS.find((model) => model.id === this.config.model);
 
 		if (model) {
