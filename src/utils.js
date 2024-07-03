@@ -85,10 +85,6 @@ module.exports = {
 			axios
 				.get(`http://${self.config.ip}/wattbox_info.xml`, {
 					headers: {
-						Host: self.config.ip,
-						'Keep-Alive': '300',
-						Connection: 'keep-alive',
-						'User-Agent': 'APP',
 						Authorization: `Basic ${self.authKey}`,
 					},
 				})
@@ -134,7 +130,8 @@ module.exports = {
 				})
 				.catch((err) => {
 					self.updateStatus('error');
-					self.log('error', err);
+					//self.log('error', err);
+					console.log(err);
 				});
 		} else if (self.config.protocol === 'telnet') {
 			self.addTelnetCommand('?OutletStatus');
@@ -146,19 +143,20 @@ module.exports = {
 	sendHTTPCommand: function (path) {
 		let self = this;
 
-		self.axios
+		axios
 			.get(`http://${self.config.ip}${path}`, {
 				headers: {
-					Host: self.config.ip,
-					'Keep-Alive': '300',
-					Connection: 'keep-alive',
-					'User-Agent': 'APP',
 					Authorization: `Basic ${self.authKey}`,
 				},
 			})
 			.catch((err) => {
-				self.log('error', 'Error sending command: ' + err);
-				self.updateStatus('error', 'Command send error');
+				let errorString = err.toString();
+				if (errorString.includes('Invalid character in chunk size')) {
+					//safely ignore it for now
+				} else {
+					self.log('error', 'Error sending command: ' + err.toString());
+					self.updateStatus('error', 'Command send error');
+				}
 			});
 		self.log('debug', `http://${self.config.ip}${path}`);
 	},
@@ -251,6 +249,8 @@ module.exports = {
 
 	controlOutlet: function (outlet, command) {
 		let self = this;
+
+		self.log('debug', 'Control Outlet: ' + outlet + ' Command: ' + command);
 
 		if (self.config.protocol == 'telnet') {
 			if (command == '1') {
