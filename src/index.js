@@ -1,18 +1,18 @@
-const { InstanceBase, InstanceStatus, runEntrypoint } = require('@companion-module/base');
+const { InstanceBase, InstanceStatus, runEntrypoint } = require('@companion-module/base')
 
-const config = require('./config.js');
+const config = require('./config.js')
 
-const actions = require('./actions.js');
-const feedbacks = require('./feedbacks.js');
-const variables = require('./variables.js');
-const presets = require('./presets.js');
+const actions = require('./actions.js')
+const feedbacks = require('./feedbacks.js')
+const variables = require('./variables.js')
+const presets = require('./presets.js')
 
-const constants = require('./constants.js');
-const utils = require('./utils.js');
+const constants = require('./constants.js')
+const utils = require('./utils.js')
 
 class SnapAVWattboxInstance extends InstanceBase {
 	constructor(internal) {
-		super(internal);
+		super(internal)
 
 		Object.assign(this, {
 			...config,
@@ -22,12 +22,12 @@ class SnapAVWattboxInstance extends InstanceBase {
 			...constants,
 			...utils,
 			...feedbacks,
-		});
+		})
 
-		this.POLLING_INTERVAL = null; //used to poll the device every second
-		this.CONNECTED = false; //used for friendly notifying of the user that we have not received data yet
+		this.POLLING_INTERVAL = null //used to poll the device every second
+		this.CONNECTED = false //used for friendly notifying of the user that we have not received data yet
 
-		this.DEVICE_DATA = {};
+		this.DEVICE_DATA = {}
 
 		this.DEVICE_DATA = {
 			deviceInfo: {
@@ -42,69 +42,69 @@ class SnapAVWattboxInstance extends InstanceBase {
 				power: 0,
 			},
 			outletInfo: [],
-		};
+		}
 
-		this.QUEUE = [];
+		this.QUEUE = []
 	}
 
 	async init(config) {
-		this.configUpdated(config);
+		this.configUpdated(config)
 	}
 
 	async configUpdated(config) {
-		this.config = config;
+		this.config = config
 
-		let model = this.MODELS.find((model) => model.id === this.config.model);
+		let model = this.MODELS.find((model) => model.id === this.config.model)
 
 		if (model) {
 			if (model.protocol) {
-				console.log('setting protocol to ' + model.protocol);
-				this.config.protocol = model.protocol;
+				console.log('setting protocol to ' + model.protocol)
+				this.config.protocol = model.protocol
 			}
 		}
 
-		this.buildOutletChoices();
+		this.buildOutletChoices()
 
 		if (this.POLLING_INTERVAL) {
-			clearInterval(this.POLLING_INTERVAL);
-			this.POLLING_INTERVAL = null;
+			clearInterval(this.POLLING_INTERVAL)
+			this.POLLING_INTERVAL = null
 		}
 
-		this.initActions();
-		this.initFeedbacks();
-		this.initVariables();
-		this.initPresets();
+		this.initActions()
+		this.initFeedbacks()
+		this.initVariables()
+		this.initPresets()
 
-		this.checkVariables();
-		this.checkFeedbacks();
+		this.checkVariables()
+		this.checkFeedbacks()
 
 		if (this.config.protocol === 'http') {
-			this.authKey = this.getAuthKey(this.config.username, this.config.password);
-			this.updateStatus(InstanceStatus.Ok);
+			this.authKey = this.getAuthKey(this.config.username, this.config.password)
+			this.updateStatus(InstanceStatus.Ok)
 
 			if (this.config.polling) {
-				this.setupInterval();
+				this.setupInterval()
 			}
 		} else if (this.config.protocol === 'telnet') {
-			this.initTelnet();
+			this.initTelnet()
 		}
 	}
 
 	async destroy() {
 		if (this.config.protocol === 'telnet') {
-			this.sendTelnetCommand('!Exit');
+			this.sendTelnetCommand('!Exit')
 		} else {
 			if (this.socket !== undefined) {
-				this.socket.destroy();
-				delete this.socket;
+				this.socket.destroy()
+				delete this.socket
 			}
 
 			if (this.POLLING_INTERVAL) {
-				clearInterval(this.POLLING_INTERVAL);
-				this.POLLING_INTERVAL = null;
+				clearInterval(this.POLLING_INTERVAL)
+				this.POLLING_INTERVAL = null
 			}
 		}
 	}
 }
 
-runEntrypoint(SnapAVWattboxInstance, []);
+runEntrypoint(SnapAVWattboxInstance, [])

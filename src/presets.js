@@ -1,25 +1,25 @@
-const { combineRgb } = require('@companion-module/base');
+const { combineRgb } = require('@companion-module/base')
 
 module.exports = {
 	initPresets: function () {
-		let self = this;
+		let self = this
 
-		let presets = {};
+		let presets = {}
 
-		const ColorWhite = combineRgb(255, 255, 255);
-		const ColorBlack = combineRgb(0, 0, 0);
-		const ColorRed = combineRgb(200, 0, 0);
-		const ColorGreen = combineRgb(0, 200, 0);
+		const ColorWhite = combineRgb(255, 255, 255)
+		const ColorBlack = combineRgb(0, 0, 0)
+		const ColorRed = combineRgb(200, 0, 0)
+		const ColorGreen = combineRgb(0, 200, 0)
 
-		let outlets = 12;
+		let outlets = 12
 
 		if (self.config.model === 'other') {
-			outlets = self.config.outlets;
+			outlets = self.config.outlets
 		} else {
-			let model = self.MODELS.find((model) => model.id === self.config.model);
+			let model = self.MODELS.find((model) => model.id === self.config.model)
 
 			if (model) {
-				outlets = model.outlets;
+				outlets = model.outlets
 			}
 		}
 
@@ -61,7 +61,7 @@ module.exports = {
 						},
 					},
 				],
-			};
+			}
 			presets[`outlet${i + 1}Off`] = {
 				type: 'button',
 				category: 'Power',
@@ -99,9 +99,9 @@ module.exports = {
 						},
 					},
 				],
-			};
+			}
 		}
 
-		this.setPresetDefinitions(presets);
+		this.setPresetDefinitions(presets)
 	},
-};
+}

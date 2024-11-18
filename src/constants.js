@@ -5,4 +5,4 @@ module.exports = {
 		{ id: '700', label: 'WB-700-IPV-12', protocol: 'http', outlets: 12 },
 		{ id: 'other', label: 'Other' },
 	],
-};
+}

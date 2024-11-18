@@ -1,4 +1,4 @@
-const { Regex } = require('@companion-module/base');
+const { Regex } = require('@companion-module/base')
 
 module.exports = {
 	getConfigFields() {
@@ -80,6 +80,6 @@ module.exports = {
 				required: true,
 				isVisible: (config) => config.polling,
 			},
-		];
+		]
 	},
-};
+}

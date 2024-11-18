@@ -1,6 +1,6 @@
 module.exports = {
 	initActions: function () {
-		let self = this;
+		let self = this
 
 		let actions = {
 			power: {
@@ -25,7 +25,7 @@ module.exports = {
 					},
 				],
 				callback: (action) => {
-					self.controlOutlet(action.options.outlet, action.options.powerState);
+					self.controlOutlet(action.options.outlet, action.options.powerState)
 				},
 			},
 			powercycle: {
@@ -40,25 +40,25 @@ module.exports = {
 					},
 				],
 				callback: (action) => {
-					self.controlOutlet(action.options.outlet, 3);
+					self.controlOutlet(action.options.outlet, 3)
 				},
 			},
 			autoRebootOn: {
 				name: 'Auto Reboot On',
 				options: [],
 				callback: () => {
-					self.controlOutlet(0, 4);
+					self.controlOutlet(0, 4)
 				},
 			},
 			autoRebootOff: {
 				name: 'Auto Reboot Off',
 				options: [],
 				callback: () => {
-					self.controlOutlet(0, 4);
+					self.controlOutlet(0, 4)
 				},
 			},
-		};
+		}
 
-		self.setActionDefinitions(actions);
+		self.setActionDefinitions(actions)
 	},
-};
+}

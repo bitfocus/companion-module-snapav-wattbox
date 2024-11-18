@@ -1,12 +1,12 @@
-const { combineRgb } = require('@companion-module/base');
+const { combineRgb } = require('@companion-module/base')
 
 module.exports = {
 	initFeedbacks: function () {
-		const feedbacks = {};
+		const feedbacks = {}
 
-		const foregroundColor = combineRgb(255, 255, 255); // White
-		const backgroundColorGreen = combineRgb(0, 255, 0); // Green
-		const backgroundColorRed = combineRgb(255, 0, 0); //Red
+		const foregroundColor = combineRgb(255, 255, 255) // White
+		const backgroundColorGreen = combineRgb(0, 255, 0) // Green
+		const backgroundColorRed = combineRgb(255, 0, 0) //Red
 
 		feedbacks.outletOn = {
 			type: 'boolean',
@@ -26,15 +26,15 @@ module.exports = {
 				},
 			],
 			callback: (feedback) => {
-				let opt = feedback.options;
+				let opt = feedback.options
 
-				let outlet = parseInt(opt.outlet);
+				let outlet = parseInt(opt.outlet)
 
 				if (this.DEVICE_DATA.outletInfo[outlet].state == 1) {
-					return true;
-				} else return false;
+					return true
+				} else return false
 			},
-		};
+		}
 
 		feedbacks.outletOff = {
 			type: 'boolean',
@@ -54,16 +54,16 @@ module.exports = {
 				},
 			],
 			callback: (feedback) => {
-				let opt = feedback.options;
+				let opt = feedback.options
 
-				let outlet = parseInt(opt.outlet);
+				let outlet = parseInt(opt.outlet)
 
 				if (this.DEVICE_DATA.outletInfo[outlet].state == 0) {
-					return true;
-				} else return false;
+					return true
+				} else return false
 			},
-		};
+		}
 
-		this.setFeedbackDefinitions(feedbacks);
+		this.setFeedbackDefinitions(feedbacks)
 	},
-};
+}

@@ -1,6 +1,6 @@
 module.exports = {
 	initVariables: function () {
-		var variables = [];
+		var variables = []
 
 		variables.push(
 			{
@@ -35,35 +35,35 @@ module.exports = {
 				variableId: 'wattage',
 				name: 'Wattage',
 			}
-		);
+		)
 
-		let model = this.MODELS.find((model) => model.id === this.config.model);
+		let model = this.MODELS.find((model) => model.id === this.config.model)
 
-		let outlets = 2;
+		let outlets = 2
 
 		if (model) {
-			outlets = model.outlets;
+			outlets = model.outlets
 		}
 
 		for (let i = 0; i < outlets; i++) {
 			variables.push({
 				variableId: `outlet${i + 1}Name`,
 				name: `Outlet ${i + 1} Name`,
-			});
+			})
 			variables.push({
 				variableId: `outlet${i + 1}State`,
 				name: `Outlet ${i + 1} State`,
-			});
+			})
 		}
 
 		if (this.config.protocol === 'telnet') {
 			variables.push({
 				variableId: 'lastTelnetResponse',
 				name: 'Last Telnet Response',
-			});
+			})
 		}
 
-		this.setVariableDefinitions(variables);
+		this.setVariableDefinitions(variables)
 	},
 
 	checkVariables: function () {
@@ -76,28 +76,28 @@ module.exports = {
 				voltage: this.DEVICE_DATA.powerInfo.voltage,
 				amperage: this.DEVICE_DATA.powerInfo.current,
 				wattage: this.DEVICE_DATA.powerInfo.power,
-			};
+			}
 
-			let model = this.MODELS.find((model) => model.id === this.config.model);
+			let model = this.MODELS.find((model) => model.id === this.config.model)
 
-			let outlets = 2;
+			let outlets = 2
 
 			if (model) {
-				outlets = model.outlets;
+				outlets = model.outlets
 			}
 
 			for (let i = 0; i < outlets; i++) {
-				variableObj[`outlet${i + 1}Name`] = this.DEVICE_DATA.outletInfo[i].name;
-				variableObj[`outlet${i + 1}State`] = this.DEVICE_DATA.outletInfo[i].state;
+				variableObj[`outlet${i + 1}Name`] = this.DEVICE_DATA.outletInfo[i].name
+				variableObj[`outlet${i + 1}State`] = this.DEVICE_DATA.outletInfo[i].state
 			}
 
 			if (this.config.protocol === 'telnet') {
-				variableObj.lastTelnetResponse = this.lastTelnetResponse;
+				variableObj.lastTelnetResponse = this.lastTelnetResponse
 			}
 
-			this.setVariableValues(variableObj);
+			this.setVariableValues(variableObj)
 		} catch (error) {
-			console.log(error);
+			console.log(error)
 		}
 	},
-};
+}
