@@ -88,7 +88,7 @@ module.exports = {
 
 			for (let i = 0; i < outlets; i++) {
 				variableObj[`outlet${i + 1}Name`] = this.DEVICE_DATA.outletInfo[i].name
-				variableObj[`outlet${i + 1}State`] = this.DEVICE_DATA.outletInfo[i].state
+				variableObj[`outlet${i + 1}State`] = this.DEVICE_DATA.outletInfo[i].state == '1' ? 'On' : 'Off'
 			}
 
 			if (this.config.protocol === 'telnet') {
