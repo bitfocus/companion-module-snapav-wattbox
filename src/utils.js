@@ -1,11 +1,12 @@
 /* eslint-disable no-case-declarations */
 const { InstanceStatus } = require('@companion-module/base')
 
-const axios = require('axios')
 const xml2js = require('xml2js')
 const Buffer = require('buffer').Buffer
 
 const parseXml = xml2js.parseString
+
+const net = require('net')
 
 const { Telnet } = require('telnet-client')
 
@@ -82,57 +83,48 @@ module.exports = {
 		let self = this
 
 		if (self.config.protocol === 'http') {
-			axios
-				.get(`http://${self.config.ip}/wattbox_info.xml`, {
-					headers: {
-						Authorization: `Basic ${self.authKey}`,
-					},
-				})
-				.then((response) => {
-					parseXml(response.data, (err, result) => {
-						//console.log(JSON.stringify(result, null, 4));
+			//this was implemented bacause of chunking issues
 
-						let names = result.request.outlet_name[0]
-						let namesArray = names.split(',')
+			const client = net.createConnection({ host: self.config.ip, port: 80 }, () => {
+				// Send a simple HTTP GET request
+				client.write('GET /wattbox_info.xml HTTP/1.1\r\n')
+				client.write(`Host: ${self.config.ip}\r\n`)
+				client.write(`Authorization: Basic ${self.authKey}\r\n`)
+				client.write('Connection: close\r\n')
+				client.write('\r\n')
+			})
 
-						let outletState = result.request.outlet_status[0]
-						let outletStateArray = outletState.split(',')
+			let rawData = ''
 
-						let info = {}
+			client.on('data', (chunk) => {
+				rawData += chunk.toString() // Accumulate the raw response
+			})
 
-						info.deviceInfo = {
-							hostName: result.request.host_name,
-							hardwareVersion: result.request.hardware_version,
-							serialNumber: result.request.serial_number,
-							cloudStatus: result.request.cloud_status,
-						}
+			client.on('end', () => {
+				//console.log('Raw Response Received:')
+				//console.log(rawData)
 
-						info.powerInfo = {
-							voltage: result.request.voltage_value,
-							current: result.request.current_value,
-							power: result.request.power_value,
-						}
+				// Manually parse the response
+				const headersEndIndex = rawData.indexOf('\r\n\r\n')
+				if (headersEndIndex !== -1) {
+					const headers = rawData.slice(0, headersEndIndex)
+					const body = rawData.slice(headersEndIndex + 4)
 
-						info.outletInfo = {}
+					//console.log('Headers:', headers)
+					//console.log('Body:', body)
+					//the body starts with some data before the first < so we need to find the first < and remove everything before it
+					const firstIndex = body.indexOf('<')
+					const cleanBody = body.slice(firstIndex)
+					self.processHttpData(cleanBody)
+				} else {
+					console.error('Malformed response: Unable to parse headers/body')
+					self.stopInterval()
+				}
+			})
 
-						for (let i = 0; i < namesArray.length; i++) {
-							info.outletInfo[i] = {
-								name: namesArray[i],
-								state: outletStateArray[i],
-							}
-						}
-
-						self.updateStatus('ok')
-
-						self.DEVICE_DATA = info
-						self.updateVariables()
-					})
-				})
-				.catch((err) => {
-					self.updateStatus('error')
-					//self.log('error', err);
-					console.log(err)
-				})
+			client.on('error', (error) => {
+				console.error('Socket Error:', error)
+			})
 		} else if (self.config.protocol === 'telnet') {
 			self.addTelnetCommand('?OutletStatus')
 			self.addTelnetCommand('?OutletName')
@@ -143,21 +135,46 @@ module.exports = {
 	sendHTTPCommand: function (path) {
 		let self = this
 
-		axios
-			.get(`http://${self.config.ip}${path}`, {
-				headers: {
-					Authorization: `Basic ${self.authKey}`,
-				},
-			})
-			.catch((err) => {
-				let errorString = err.toString()
-				if (errorString.includes('Invalid character in chunk size')) {
-					//safely ignore it for now
-				} else {
-					self.log('error', 'Error sending command: ' + err.toString())
-					self.updateStatus('error', 'Command send error')
-				}
-			})
+		//replace with raw net request
+		const client = net.createConnection({ host: self.config.ip, port: 80 }, () => {
+			// Send a simple HTTP GET request
+			client.write(`GET ${path} HTTP/1.1\r\n`)
+			client.write(`Host: ${self.config.ip}\r\n`)
+			client.write(`Authorization: Basic ${self.authKey}\r\n`)
+			client.write('Connection: close\r\n')
+			client.write('\r\n')
+		})
+
+		let rawData = ''
+
+		client.on('data', (chunk) => {
+			rawData += chunk.toString() // Accumulate the raw response
+		})
+
+		client.on('end', () => {
+			//console.log('Raw Response Received:')
+			//console.log(rawData)
+
+			// Manually parse the response
+			const headersEndIndex = rawData.indexOf('\r\n\r\n')
+			if (headersEndIndex !== -1) {
+				const headers = rawData.slice(0, headersEndIndex)
+				const body = rawData.slice(headersEndIndex + 4)
+
+				//the body starts with some data before the first < so we need to find the first < and remove everything before it
+				const firstIndex = body.indexOf('<')
+				const cleanBody = body.slice(firstIndex)
+				//console.log('Body:', cleanBody)
+			} else {
+				console.error('Malformed response: Unable to parse headers/body')
+				self.stopInterval()
+			}
+		})
+
+		client.on('error', (error) => {
+			console.error('Socket Error:', error)
+		})
+
 		self.log('debug', `http://${self.config.ip}${path}`)
 	},
 
@@ -245,6 +262,50 @@ module.exports = {
 
 		self.QUEUE.shift()
 		self.checkTelnetQueue()
+	},
+
+	processHttpData: function (data) {
+		let self = this
+
+		parseXml(data, (err, result) => {
+			//console.log(JSON.stringify(result, null, 4))
+
+			let names = result.request.outlet_name[0]
+			let namesArray = names.split(',')
+
+			let outletState = result.request.outlet_status[0]
+			let outletStateArray = outletState.split(',')
+
+			let info = {}
+
+			info.deviceInfo = {
+				hostName: result.request.host_name,
+				hardwareVersion: result.request.hardware_version,
+				serialNumber: result.request.serial_number,
+				cloudStatus: result.request.cloud_status,
+			}
+
+			info.powerInfo = {
+				voltage: result.request.voltage_value,
+				current: result.request.current_value,
+				power: result.request.power_value,
+			}
+
+			info.outletInfo = {}
+
+			for (let i = 0; i < namesArray.length; i++) {
+				info.outletInfo[i] = {
+					name: namesArray[i],
+					state: outletStateArray[i],
+				}
+			}
+
+			self.updateStatus('ok')
+
+			self.DEVICE_DATA = info
+			self.checkFeedbacks()
+			self.checkVariables()
+		})
 	},
 
 	controlOutlet: function (outlet, command) {
