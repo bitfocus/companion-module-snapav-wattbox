@@ -3,7 +3,7 @@
 	"name": "snapav-wattbox",
 	"shortname": "snapav-wattbox",
 	"description": "SnapAV Wattbox",
-	"version": "2.0.1",
+	"version": "2.2.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-snapav-wattbox.git",
 	"bugs": "https://github.com/bitfocus/companion-module-snapav-wattbox/issues",
@@ -19,7 +19,7 @@
 	],
 	"legacyIds": [],
 	"runtime": {
-		"type": "node22",
+		"type": "node18",
 		"api": "nodejs-ipc",
 		"apiVersion": "0.0.0",
 		"entrypoint": "../src/index.js"
