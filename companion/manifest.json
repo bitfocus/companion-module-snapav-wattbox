@@ -9,17 +9,17 @@
 	"bugs": "https://github.com/bitfocus/companion-module-snapav-wattbox/issues",
 	"maintainers": [
 		{
-			"name": "David Stevens",
-			"email": "opensource@jtf4.com"
-		},
-		{
 			"name": "Joseph Adams",
 			"email": "josephdadams@gmail.com"
+		},
+		{
+			"name": "David Stevens",
+			"email": "opensource@jtf4.com"
 		}
 	],
 	"legacyIds": [],
 	"runtime": {
-		"type": "node18",
+		"type": "node22",
 		"api": "nodejs-ipc",
 		"apiVersion": "0.0.0",
 		"entrypoint": "../src/index.js"
