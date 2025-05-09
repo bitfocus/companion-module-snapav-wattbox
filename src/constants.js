@@ -9,6 +9,7 @@ module.exports = {
 			outlets: 5,
 		},
 		{ id: '700', label: 'WB-700-IPV-12', protocol: 'http', outlets: 12 },
+		{ id: '800vps', label: 'WB-800VPS-IPVM-18', protocol: 'http', outlets: 18 },
 		{ id: 'other', label: 'Other' },
 	],
 }
