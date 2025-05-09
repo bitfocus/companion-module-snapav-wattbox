@@ -28,42 +28,48 @@ module.exports = {
 
 	controlOutlet: function (outlet, command) {
 		let self = this
-
+	
 		self.log('debug', 'Control Outlet: ' + outlet + ' Command: ' + command)
-
-		if (self.config.protocol == 'telnet') {
-			if (command == '1') {
+	
+		const isModel800vps = self.config.model === '800vps'
+	
+		// If 'All' selected and model is 800vps, loop through each real outlet
+		if (outlet === '0' && isModel800vps) {
+			for (let choice of self.outletChoices) {
+				if (choice.id !== '0') {
+					self.controlOutlet(choice.id, command)
+				}
+			}
+			return
+		}
+	
+		if (self.config.protocol === 'telnet') {
+			if (command === '1') {
 				command = 'ON'
-			} else if (command == '0') {
+			} else if (command === '0') {
 				command = 'OFF'
 			}
 			self.addTelnetCommand(`!OutletSet=${outlet},${command}`)
 		} else {
 			let path = ''
-
-			if (self.config.model == '800vps') {
-				///outlet/on?o=1
-				if (command == '1') {
-					command = 'on'
-					path = `/outlet/${command}?o=${outlet}`
+	
+			if (isModel800vps) {
+				if (command === '1') {
+					path = `/outlet/on?o=${outlet}`
+				} else if (command === '0') {
+					path = `/outlet/off?o=${outlet}`
+				} else if (command === '3') {
+					path = `/outlet/reset?o=${outlet}`
 				}
-				if (command == '0') {
-					command = 'off'
-					path = `/outlet/${command}?o=${outlet}`
-				}
-				if (command == '3') {
-					command = 'reset'
-					path = `/outlet/${command}?o=${outlet}`
-				}
-				//don't do other commands for now
+				// Unsupported commands ignored
 			} else {
 				path = `/control.cgi?outlet=${outlet}&command=${command}`
 			}
-
+	
 			if (self.config.verbose) {
 				self.log('debug', 'Control Outlet Path: ' + path)
 			}
-
+	
 			if (path !== '') {
 				self.sendHTTPCommand(path)
 			}
