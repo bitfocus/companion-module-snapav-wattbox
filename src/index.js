@@ -8,7 +8,11 @@ const variables = require('./variables.js')
 const presets = require('./presets.js')
 
 const constants = require('./constants.js')
+
 const utils = require('./utils.js')
+
+const telnet = require('./telnet.js')
+const http = require('./http.js')
 
 class SnapAVWattboxInstance extends InstanceBase {
 	constructor(internal) {
@@ -17,11 +21,16 @@ class SnapAVWattboxInstance extends InstanceBase {
 		Object.assign(this, {
 			...config,
 			...actions,
-			...presets,
-			...variables,
-			...constants,
-			...utils,
 			...feedbacks,
+			...variables,
+			...presets,
+
+			...constants,
+
+			...utils,
+
+			...telnet,
+			...http,
 		})
 
 		this.POLLING_INTERVAL = null //used to poll the device every second
@@ -45,6 +54,8 @@ class SnapAVWattboxInstance extends InstanceBase {
 		}
 
 		this.QUEUE = []
+
+		this.USING_DIGEST_AUTH = false
 	}
 
 	async init(config) {
@@ -80,6 +91,9 @@ class SnapAVWattboxInstance extends InstanceBase {
 
 		if (this.config.protocol === 'http') {
 			this.authKey = this.getAuthKey(this.config.username, this.config.password)
+			if (this.config.verbose) {
+				this.log('debug', 'Auth Key: ' + this.authKey)
+			}
 			this.updateStatus(InstanceStatus.Ok)
 
 			if (this.config.polling) {

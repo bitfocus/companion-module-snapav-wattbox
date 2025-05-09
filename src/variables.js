@@ -73,9 +73,9 @@ module.exports = {
 				hardwareVersion: this.DEVICE_DATA.deviceInfo.hardwareVersion,
 				serialNumber: this.DEVICE_DATA.deviceInfo.serialNumber,
 				cloudStatus: this.DEVICE_DATA.deviceInfo.cloudStatus,
-				voltage: this.DEVICE_DATA.powerInfo.voltage,
-				amperage: this.DEVICE_DATA.powerInfo.current,
-				wattage: this.DEVICE_DATA.powerInfo.power,
+				voltage: this.DEVICE_DATA.powerInfo?.voltage,
+				amperage: this.DEVICE_DATA.powerInfo?.current,
+				wattage: this.DEVICE_DATA.powerInfo?.power,
 			}
 
 			let model = this.MODELS.find((model) => model.id === this.config.model)
