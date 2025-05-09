@@ -80,6 +80,20 @@ module.exports = {
 				required: true,
 				isVisible: (config) => config.polling,
 			},
+			{
+				type: 'static-text',
+				id: 'hr1',
+				width: 12,
+				label: ' ',
+				value: '<hr />',
+			},
+			{
+				type: 'checkbox',
+				id: 'verbose',
+				label: 'Enable Verbose Logging',
+				default: false,
+				width: 4,
+			},
 		]
 	},
 }
