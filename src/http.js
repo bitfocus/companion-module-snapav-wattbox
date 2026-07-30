@@ -159,7 +159,16 @@ module.exports = {
 
 					if (self.config.model === '800vps') {
 						const outletData = parseWattboxHtml(cleanBody)
+						// This model reports through the web UI rather than the XML API, so it takes
+						// a separate path. It still needs the same failure tracking and the same
+						// dropdown labelling as everything else.
+						if (!outletData || (outletData.outletInfo ?? []).length === 0) {
+							self.pollFailed('no outlets found in the web UI response')
+							return
+						}
 						self.DEVICE_DATA = outletData
+						self.pollSucceeded()
+						self.refreshOutletChoices()
 						self.checkFeedbacks()
 						self.checkVariables()
 					} else {
