@@ -344,6 +344,10 @@ module.exports = {
 
 				self.DEVICE_DATA = parsed
 				self.pollSucceeded()
+				// Outlet names live on the device, so the action and feedback dropdowns can only be
+				// labelled once status has been read. Do this before the feedback pass so a rename
+				// is reflected everywhere in the same update.
+				self.refreshOutletChoices()
 				self.checkFeedbacks()
 				self.checkVariables()
 			})
