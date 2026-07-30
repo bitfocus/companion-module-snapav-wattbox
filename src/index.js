@@ -56,6 +56,13 @@ class SnapAVWattboxInstance extends InstanceBase {
 		this.QUEUE = []
 
 		this.USING_DIGEST_AUTH = false
+
+		// Polling resilience. A busy WattBox drops the occasional response, so tolerate a few
+		// before reporting a problem, and back off instead of giving up entirely.
+		this.POLL_FAILURES = 0
+		this.POLL_FAILURE_TOLERANCE = 3
+		this.POLL_BACKOFF = null
+		this.POLL_BACKOFF_MAX = 60000
 	}
 
 	async init(config) {
@@ -94,7 +101,15 @@ class SnapAVWattboxInstance extends InstanceBase {
 			if (this.config.verbose) {
 				this.log('debug', 'Auth Key: ' + this.authKey)
 			}
-			this.updateStatus(InstanceStatus.Ok)
+			this.updateStatus(InstanceStatus.Connecting)
+
+			this.POLL_FAILURES = 0
+			this.POLL_BACKOFF = null
+			this.CONNECTED = false
+
+			// Fetch once immediately. Without this, variables stay empty until the first poll tick,
+			// and stay empty forever when polling is switched off.
+			this.getInformation()
 
 			if (this.config.polling) {
 				this.setupInterval()

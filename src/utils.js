@@ -76,6 +76,51 @@ module.exports = {
 		}
 	},
 
+	// Outlet configuration lives behind property.cgi, whose fields are prefixed with the model
+	// number: outlet 1's name on a 300 series is "24outlet1_name". The prefix was captured from a
+	// WB-300-IP-3; if other models differ this is the single place to adjust.
+	propertyFieldPrefix: function () {
+		return '24'
+	},
+
+	setOutletName: function (outlet, name) {
+		let self = this
+
+		if (self.config.protocol !== 'http') {
+			self.log('warn', 'Renaming an outlet requires the HTTP protocol.')
+			return
+		}
+
+		// The device stores the name verbatim, so a comma would corrupt the comma separated
+		// outlet_name list it reports back in status.
+		const clean = String(name ?? '').replace(/,/g, ' ')
+
+		if (clean !== String(name ?? '')) {
+			self.log('warn', 'Commas are not allowed in outlet names and were replaced with spaces.')
+		}
+
+		const field = `${self.propertyFieldPrefix()}outlet${outlet}_name`
+		const body = `${field}=${encodeURIComponent(clean)}`
+
+		self.sendHTTPPost('/property.cgi', body, `Rename outlet ${outlet} to "${clean}"`)
+	},
+
+	setOutletMode: function (outlet, mode) {
+		let self = this
+
+		if (self.config.protocol !== 'http') {
+			self.log('warn', 'Setting outlet mode requires the HTTP protocol.')
+			return
+		}
+
+		const field = `${self.propertyFieldPrefix()}outlet${outlet}_method`
+		const body = `${field}=${encodeURIComponent(mode)}`
+
+		const label = mode === '2' ? 'Reset Only' : 'Normal'
+
+		self.sendHTTPPost('/property.cgi', body, `Set outlet ${outlet} mode to ${label}`)
+	},
+
 	buildOutletChoices: function () {
 		let self = this
 
@@ -122,5 +167,78 @@ module.exports = {
 			clearInterval(self.POLLING_INTERVAL)
 			self.POLLING_INTERVAL = null
 		}
+	},
+
+	// A WattBox's embedded web server is single threaded. Poll it faster than it can answer and it
+	// starts returning empty or partial documents, so an occasional bad response is expected rather
+	// than exceptional. Tolerate a few, then back off; never stop polling, because a connection that
+	// gives up can only be revived by disabling and re-enabling it by hand.
+	pollFailed: function (reason) {
+		let self = this
+
+		self.POLL_FAILURES = (self.POLL_FAILURES ?? 0) + 1
+
+		if (self.config.verbose) {
+			self.log('debug', `Poll failed (${self.POLL_FAILURES}): ${reason}`)
+		}
+
+		if (self.POLL_FAILURES < self.POLL_FAILURE_TOLERANCE) {
+			return
+		}
+
+		if (self.CONNECTED !== false) {
+			self.CONNECTED = false
+			self.log('warn', `No usable status from the WattBox: ${reason}. Slowing down and retrying.`)
+			self.updateStatus(InstanceStatus.ConnectionFailure, reason)
+		}
+
+		self.applyPollBackoff()
+	},
+
+	pollSucceeded: function () {
+		let self = this
+
+		const wasFailing = self.POLL_FAILURES >= self.POLL_FAILURE_TOLERANCE
+
+		self.POLL_FAILURES = 0
+
+		if (self.CONNECTED !== true) {
+			self.CONNECTED = true
+			self.updateStatus(InstanceStatus.Ok)
+		}
+
+		// Restore the configured rate once the device is answering again.
+		if (wasFailing && self.POLL_BACKOFF !== null) {
+			self.POLL_BACKOFF = null
+			self.log('info', 'WattBox is responding again, returning to the configured polling interval.')
+			self.setupInterval()
+		}
+	},
+
+	// Double the interval on repeated failure up to a ceiling, so a device that is wedged or offline
+	// is retried gently instead of being hammered while it recovers.
+	applyPollBackoff: function () {
+		let self = this
+
+		if (!self.config.polling) {
+			return
+		}
+
+		const base = Number(self.config.interval) || 5000
+		const next = self.POLL_BACKOFF === null || self.POLL_BACKOFF === undefined ? base * 2 : self.POLL_BACKOFF * 2
+		const capped = Math.min(next, self.POLL_BACKOFF_MAX)
+
+		if (capped === self.POLL_BACKOFF) {
+			return
+		}
+
+		self.POLL_BACKOFF = capped
+
+		if (self.config.verbose) {
+			self.log('debug', `Backing off polling to ${capped}ms`)
+		}
+
+		self.stopInterval()
+		self.POLLING_INTERVAL = setInterval(self.getInformation.bind(self), capped)
 	},
 }

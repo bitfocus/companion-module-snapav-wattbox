@@ -48,7 +48,6 @@ function parseWattboxHtml(html) {
 		})
 	} catch (error) {
 	} finally {
-		console.log('Parsed Wattbox HTML:', outlets)
 		return {
 			deviceInfo,
 			outletInfo: outlets,
@@ -57,9 +56,6 @@ function parseWattboxHtml(html) {
 }
 
 function parseHeaders(rawHeaders) {
-	console.log('Parsing Headers')
-	console.log(rawHeaders)
-
 	const headers = {}
 	const lines = rawHeaders.split('\r\n')
 	for (let line of lines) {
@@ -118,10 +114,12 @@ module.exports = {
 					const headersRaw = rawData.slice(0, headersEndIndex)
 					const headers = parseHeaders(headersRaw)
 
-					// Check for 404 Not Found
+					// A 404 usually means the wrong model is selected, so the configured status path
+					// does not exist on this device. Report it and back off, but keep polling: the
+					// user may fix the model in config, and a connection that stopped its own timer
+					// can only be revived by disabling and re-enabling it.
 					if (headersRaw.includes('404 Not Found')) {
-						self.log('debug', `404 Not Found: ${path}`)
-						self.stopInterval()
+						self.pollFailed(`404 Not Found for ${path} — check the Model setting`)
 						return
 					}
 
@@ -171,10 +169,12 @@ module.exports = {
 			})
 
 			client.on('error', (error) => {
-				console.error('Socket Error:', error)
+				self.pollFailed(`socket error: ${error.message ?? error}`)
 			})
 
-			self.log('debug', `http://${self.config.ip}${path}`)
+			if (self.config.verbose) {
+				self.log('debug', `http://${self.config.ip}${path}`)
+			}
 		}
 
 		// Choose auth method based on global
@@ -197,11 +197,55 @@ module.exports = {
 		}
 	},
 
-	sendHTTPCommandWithDigest: function (path, digestHeader) {
+	// Configuration changes go to property.cgi as a form POST, unlike outlet control and status
+	// which are GETs against control.cgi and wattbox_info.xml. Sent with the same credentials the
+	// rest of the module uses.
+	sendHTTPPost: function (path, body, description) {
 		let self = this
 
-		console.log('Sending Digest Auth')
-		console.log(digestHeader)
+		const client = net.createConnection({ host: self.config.ip, port: 80 }, () => {
+			client.write(`POST ${path} HTTP/1.1\r\n`)
+			client.write(`Host: ${self.config.ip}\r\n`)
+			client.write(`Authorization: Basic ${self.authKey}\r\n`)
+			client.write('Content-Type: application/x-www-form-urlencoded\r\n')
+			client.write(`Content-Length: ${Buffer.byteLength(body)}\r\n`)
+			client.write('Connection: close\r\n')
+			client.write('\r\n')
+			client.write(body)
+		})
+
+		let rawData = ''
+
+		client.on('data', (chunk) => {
+			rawData += chunk.toString()
+		})
+
+		client.on('end', () => {
+			const ok = rawData.includes('200 OK')
+
+			if (ok) {
+				if (self.config.verbose) {
+					self.log('debug', `${description} accepted`)
+				}
+				// Read the change back so variables reflect it without waiting for the next poll.
+				setTimeout(() => self.getInformation(), 750)
+			} else {
+				const status = rawData.split('\r\n')[0] ?? 'no response'
+				self.log('warn', `${description} may have failed: ${status}`)
+			}
+		})
+
+		client.on('error', (error) => {
+			self.log('error', `${description} failed: ${error.message ?? error}`)
+		})
+
+		if (self.config.verbose) {
+			self.log('debug', `POST http://${self.config.ip}${path} ${body}`)
+		}
+	},
+
+	sendHTTPCommandWithDigest: function (path, digestHeader) {
+		let self = this
 
 		const client = net.createConnection({ host: self.config.ip, port: 80 }, () => {
 			client.write(`GET ${path} HTTP/1.1\r\n`)
@@ -222,12 +266,11 @@ module.exports = {
 			const body = rawData.slice(headersEndIndex + 4)
 			const firstIndex = body.indexOf('<')
 			const cleanBody = body.slice(firstIndex)
-			console.log('processing digest response')
 			self.processHttpData(cleanBody)
 		})
 
 		client.on('error', (error) => {
-			console.error('Retry Socket Error:', error)
+			self.pollFailed(`digest retry socket error: ${error.message ?? error}`)
 		})
 	},
 
@@ -235,55 +278,77 @@ module.exports = {
 		let self = this
 
 		if (self.config.verbose) {
-			//self.log('debug', 'Raw Data: ' + data)
+			self.log('debug', `Raw Data: ${data}`)
+		}
+
+		// A WattBox under load answers with an empty body, a partial document, or the web UI's
+		// login redirect instead of status XML. Those are normal on a busy device, not faults, so
+		// they must not take the connection down.
+		if (!data || data.trim() === '') {
+			self.pollFailed('empty response')
+			return
 		}
 
 		try {
 			parseXml(data, (err, result) => {
-				console.log(JSON.stringify(result, null, 4))
-
-				if (result && result?.request) {
-					const data = result.request
-					let names = data.outlet_name[0]
-					let namesArray = names.split(',')
-
-					let outletState = data.outlet_status[0]
-					let outletStateArray = outletState.split(',')
-
-					let info = {}
-
-					info.deviceInfo = {
-						hostName: data.host_name,
-						hardwareVersion: data.hardware_version,
-						serialNumber: data.serial_number,
-						cloudStatus: data.cloud_status,
-					}
-
-					info.powerInfo = {
-						voltage: data.voltage_value,
-						current: data.current_value,
-						power: data.power_value,
-					}
-
-					info.outletInfo = {}
-
-					for (let i = 0; i < namesArray.length; i++) {
-						info.outletInfo[i] = {
-							name: namesArray[i],
-							state: outletStateArray[i],
-						}
-					}
-
-					self.DEVICE_DATA = info
-					self.checkFeedbacks()
-					self.checkVariables()
+				if (err) {
+					self.pollFailed(`unparseable response: ${err.message}`)
+					return
 				}
 
-				self.updateStatus(InstanceStatus.Ok)
+				const info = result?.request
+
+				// Anything that is not a <request> document is the device telling us it is busy or
+				// wants a login, not status. Retry rather than treating it as a hard failure.
+				if (!info) {
+					self.pollFailed('response was not WattBox status XML')
+					return
+				}
+
+				// Every field below is optional on some firmware and truncated responses, so read
+				// defensively; one missing element must not discard the rest of the update.
+				const first = (field) => (Array.isArray(field) ? field[0] : field)
+				const namesArray = String(first(info.outlet_name) ?? '')
+					.split(',')
+					.filter((n) => n !== '')
+				const outletStateArray = String(first(info.outlet_status) ?? '').split(',')
+
+				if (namesArray.length === 0) {
+					self.pollFailed('status XML contained no outlet data')
+					return
+				}
+
+				let parsed = {}
+
+				parsed.deviceInfo = {
+					hostName: first(info.host_name) ?? '',
+					hardwareVersion: first(info.hardware_version) ?? '',
+					serialNumber: first(info.serial_number) ?? '',
+					cloudStatus: first(info.cloud_status) ?? '',
+				}
+
+				parsed.powerInfo = {
+					voltage: first(info.voltage_value) ?? '',
+					current: first(info.current_value) ?? '',
+					power: first(info.power_value) ?? '',
+				}
+
+				parsed.outletInfo = {}
+
+				for (let i = 0; i < namesArray.length; i++) {
+					parsed.outletInfo[i] = {
+						name: namesArray[i],
+						state: outletStateArray[i] ?? '0',
+					}
+				}
+
+				self.DEVICE_DATA = parsed
+				self.pollSucceeded()
+				self.checkFeedbacks()
+				self.checkVariables()
 			})
 		} catch (error) {
-			self.log('error', `Error parsing XML: ${error}`)
-			self.updateStatus(InstanceStatus.Error, `Error parsing XML: ${error}`)
+			self.pollFailed(`error parsing XML: ${error.message ?? error}`)
 		}
 	},
 }
