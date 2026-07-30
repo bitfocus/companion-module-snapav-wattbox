@@ -76,11 +76,12 @@ module.exports = {
 		}
 	},
 
-	// Outlet configuration lives behind property.cgi, whose fields are prefixed with the model
-	// number: outlet 1's name on a 300 series is "24outlet1_name". The prefix was captured from a
-	// WB-300-IP-3; if other models differ this is the single place to adjust.
+	// Outlet configuration lives behind property.cgi. Its form fields are named with a literal
+	// leading "$" -- the web UI renders <input name="$outlet1_name"> -- which url encodes to
+	// %24outlet1_name on the wire. Sending the name without the "$" is accepted with a 200 and
+	// then silently ignored, so this prefix is load bearing.
 	propertyFieldPrefix: function () {
-		return '24'
+		return '$'
 	},
 
 	setOutletName: function (outlet, name) {
@@ -99,10 +100,10 @@ module.exports = {
 			self.log('warn', 'Commas are not allowed in outlet names and were replaced with spaces.')
 		}
 
-		const field = `${self.propertyFieldPrefix()}outlet${outlet}_name`
+		const field = encodeURIComponent(`${self.propertyFieldPrefix()}outlet${outlet}_name`)
 		const body = `${field}=${encodeURIComponent(clean)}`
 
-		self.sendHTTPPost('/property.cgi', body, `Rename outlet ${outlet} to "${clean}"`)
+		self.sendSessionPost('/property.cgi', body, `Rename outlet ${outlet} to "${clean}"`)
 	},
 
 	setOutletMode: function (outlet, mode) {
@@ -113,12 +114,12 @@ module.exports = {
 			return
 		}
 
-		const field = `${self.propertyFieldPrefix()}outlet${outlet}_method`
+		const field = encodeURIComponent(`${self.propertyFieldPrefix()}outlet${outlet}_method`)
 		const body = `${field}=${encodeURIComponent(mode)}`
 
 		const label = mode === '2' ? 'Reset Only' : 'Normal'
 
-		self.sendHTTPPost('/property.cgi', body, `Set outlet ${outlet} mode to ${label}`)
+		self.sendSessionPost('/property.cgi', body, `Set outlet ${outlet} mode to ${label}`)
 	},
 
 	buildOutletChoices: function () {

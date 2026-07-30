@@ -13,6 +13,7 @@ const utils = require('./utils.js')
 
 const telnet = require('./telnet.js')
 const http = require('./http.js')
+const session = require('./session.js')
 
 class SnapAVWattboxInstance extends InstanceBase {
 	constructor(internal) {
@@ -31,6 +32,7 @@ class SnapAVWattboxInstance extends InstanceBase {
 
 			...telnet,
 			...http,
+			...session,
 		})
 
 		this.POLLING_INTERVAL = null //used to poll the device every second
@@ -63,6 +65,9 @@ class SnapAVWattboxInstance extends InstanceBase {
 		this.POLL_FAILURE_TOLERANCE = 3
 		this.POLL_BACKOFF = null
 		this.POLL_BACKOFF_MAX = 60000
+
+		// Session cookie for property.cgi, established lazily on the first config change.
+		this.SESSION_COOKIE = null
 	}
 
 	async init(config) {
