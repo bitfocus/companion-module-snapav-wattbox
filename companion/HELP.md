@@ -54,7 +54,6 @@ device and update on their own if you rename an outlet.
 - WattBox WB-300-IP-3 (Firmware: WB10.6c14) (REST)
 - WB-250-IPW-2 (Telnet)
 
-
 ### Polling
 
 Turn on **Enable Polling** if you want outlet names, states and power readings as variables and
