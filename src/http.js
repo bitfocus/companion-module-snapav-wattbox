@@ -240,9 +240,19 @@ module.exports = {
 
 		try {
 			parseXml(data, (err, result) => {
-				console.log(JSON.stringify(result, null, 4))
+				if (self.config.verbose) {
+					console.log(JSON.stringify(result, null, 4))
+				}
 
-				if (result && result?.request) {
+				// Replies to control commands (/control.cgi) share the same <request> root as
+				// wattbox_info.xml but carry no outlet data. Ignore anything that is not a full
+				// status document rather than crashing on undefined[0].
+				const hasOutletData =
+					result?.request &&
+					Array.isArray(result.request.outlet_name) &&
+					Array.isArray(result.request.outlet_status)
+
+				if (hasOutletData) {
 					const data = result.request
 					let names = data.outlet_name[0]
 					let namesArray = names.split(',')
