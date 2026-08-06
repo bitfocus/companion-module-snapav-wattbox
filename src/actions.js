@@ -54,7 +54,55 @@ module.exports = {
 				name: 'Auto Reboot Off',
 				options: [],
 				callback: () => {
-					self.controlOutlet(0, 4)
+					self.controlOutlet(0, 5)
+				},
+			},
+			renameOutlet: {
+				name: 'Rename Outlet',
+				options: [
+					{
+						type: 'dropdown',
+						label: 'Outlet',
+						id: 'outlet',
+						default: '1',
+						choices: self.outletChoices.filter((choice) => choice.id !== '0'),
+					},
+					{
+						type: 'textinput',
+						label: 'Name',
+						id: 'name',
+						default: '',
+						useVariables: true,
+					},
+				],
+				callback: async (action) => {
+					const name = await self.parseVariablesInString(action.options.name)
+					self.setOutletName(action.options.outlet, name)
+				},
+			},
+			setOutletMode: {
+				name: 'Set Outlet Mode',
+				options: [
+					{
+						type: 'dropdown',
+						label: 'Outlet',
+						id: 'outlet',
+						default: '1',
+						choices: self.outletChoices.filter((choice) => choice.id !== '0'),
+					},
+					{
+						type: 'dropdown',
+						label: 'Mode',
+						id: 'mode',
+						default: '1',
+						choices: [
+							{ id: '1', label: 'Normal (can be switched on or off)' },
+							{ id: '2', label: 'Reset Only (always on, reset permitted)' },
+						],
+					},
+				],
+				callback: (action) => {
+					self.setOutletMode(action.options.outlet, action.options.mode)
 				},
 			},
 		}
