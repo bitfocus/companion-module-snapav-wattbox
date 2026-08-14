@@ -129,8 +129,11 @@ module.exports = {
 				case '?OutletName':
 					let nameArray = params[1].split(',')
 					for (let i = 0; i < self.DEVICE_DATA.outletInfo.length; i++) {
+						if (nameArray[i] === undefined) continue
 						self.DEVICE_DATA.outletInfo[i].name = nameArray[i].replace('{', '').replace('}', '')
 					}
+					// Label the action and feedback dropdowns with these names, same as the HTTP path.
+					self.refreshOutletChoices()
 					break
 				case '?AutoReboot':
 					self.DEVICE_DATA.deviceInfo.autoReboot = params[1]

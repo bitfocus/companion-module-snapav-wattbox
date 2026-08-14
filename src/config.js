@@ -75,10 +75,12 @@ module.exports = {
 				id: 'interval',
 				label: `Polling interval in milliseconds`,
 				width: 12,
-				min: 200,
-				default: 500,
+				min: 1000,
+				default: 5000,
 				required: true,
 				isVisible: (config) => config.polling,
+				tooltip:
+					'A WattBox has a single threaded web server. Polling faster than about a second makes it return empty or partial responses, so leave this at 5000 unless you have a reason not to.',
 			},
 			{
 				type: 'static-text',

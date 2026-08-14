@@ -1,2 +1,4 @@
 node_modules/
 .DS_Store
+# This repo uses yarn; npm's lockfile must not be committed.
+package-lock.json

@@ -78,17 +78,15 @@ module.exports = {
 				wattage: this.DEVICE_DATA.powerInfo?.power,
 			}
 
-			let model = this.MODELS.find((model) => model.id === this.config.model)
+			const outlets = this.outletCount()
 
-			let outlets = 2
-
-			if (model) {
-				outlets = model.outlets
-			}
-
+			// Outlet data is absent until the first successful poll, so read it defensively rather
+			// than throwing and losing the rest of the update.
+			const info = this.DEVICE_DATA?.outletInfo
 			for (let i = 0; i < outlets; i++) {
-				variableObj[`outlet${i + 1}Name`] = this.DEVICE_DATA.outletInfo[i].name
-				variableObj[`outlet${i + 1}State`] = this.DEVICE_DATA.outletInfo[i].state == '1' ? 'On' : 'Off'
+				const entry = (Array.isArray(info) ? info[i] : info?.[i]) ?? {}
+				variableObj[`outlet${i + 1}Name`] = entry.name ?? ''
+				variableObj[`outlet${i + 1}State`] = entry.state == '1' ? 'On' : 'Off'
 			}
 
 			if (this.config.protocol === 'telnet') {
